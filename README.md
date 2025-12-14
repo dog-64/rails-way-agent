@@ -18,24 +18,38 @@
 
 ```
 rails-way-agent/
-├── README.md                     # Этот файл
-├── CLAUDE.md                     # Инструкции для Claude Code
-├── rails-way-agent.md            # Определение агента
-└── .idea/                        # IDE конфигурация (JetBrains)
+├── README.md              # Документация
+├── CLAUDE.md              # Инструкции для Claude Code
+├── rails-way-agent.md     # Определение агента
+├── setup.sh               # Скрипт установки
+└── LICENSE                # MIT лицензия
 ```
 
-## Как использовать
+## Установка
 
-### Установка
-
-Агент находится в файле `rails-way-agent.md`. Скопируйте его в ваш Rails проект:
+### Автоматическая (рекомендуется)
 
 ```bash
-mkdir -p .claude/agents/
-cp rails-way-agent.md .claude/agents/
+git clone https://github.com/dog-64/rails-way-agent.git
+cd rails-way-agent
+./setup.sh
 ```
 
-В Claude Code вызовите агента командой `/agent rails8-review` или по названию.
+Скрипт:
+- Копирует агента в `~/.claude/agents/rails8-review/`
+- Настраивает глобальные hooks для .rb файлов
+- Проверяет наличие Claude CLI
+
+### Ручная
+
+```bash
+mkdir -p ~/.claude/agents/rails8-review/
+cp rails-way-agent.md ~/.claude/agents/rails8-review/
+```
+
+## Использование
+
+В Claude Code вызовите агента командой `/agent rails8-review`.
 
 ### Примеры
 

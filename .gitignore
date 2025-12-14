@@ -1,0 +1,15 @@
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude Code local files
+.claude/
+
+# macOS
+.DS_Store
+
+# Временные файлы
+*.tmp
+*.bak

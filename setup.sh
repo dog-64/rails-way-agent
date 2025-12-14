@@ -66,11 +66,11 @@ HOOKS_CONFIG=$(cat <<'HOOKS_EOF'
 {
   "PostToolUse": [
     {
-      "matcher": "Write|Edit|Read",
+      "matcher": "Write|Edit",
       "hooks": [
         {
           "type": "command",
-          "command": "if [[ \"$TOOL_INPUT_FILE_PATH\" == *.rb ]] || [[ \"$TOOL_INPUT_FILE_PATH\" == *Gemfile ]]; then echo '📋 Rails 8 Code Review Agent: File contains Ruby/Rails code - Consider running /agent rails8-review'; fi"
+          "command": "file=$(cat | jq -r '.tool_input.file_path // empty' 2>/dev/null); [[ \"$file\" == *.rb ]] || [[ \"$file\" == *Gemfile ]] && echo '📋 Rails 8: Consider running /agent rails8-review' || true"
         }
       ]
     }
@@ -82,41 +82,43 @@ HOOKS_EOF
 # Создаём ~/.claude директорию если её нет
 mkdir -p "$HOME/.claude"
 
-# Проверяем существование файла settings.json
-if [ ! -f "$GLOBAL_SETTINGS" ]; then
-    # Если файл не существует - создаём с нашей конфигурацией
-    echo -e "${BLUE}📝 Создаю $GLOBAL_SETTINGS...${NC}"
-    echo "{" > "$GLOBAL_SETTINGS"
-    echo "  \"hooks\": $HOOKS_CONFIG" >> "$GLOBAL_SETTINGS"
-    echo "}" >> "$GLOBAL_SETTINGS"
-    echo -e "${GREEN}  ✓${NC} Глобальные hooks установлены"
+# Проверяем есть ли jq
+if ! command -v jq &> /dev/null; then
+    echo -e "${YELLOW}⚠️  jq не найден, не удалось настроить hooks${NC}"
+    echo -e "${BLUE}Установите jq: brew install jq${NC}"
+    echo ""
+    echo -e "${BLUE}Или добавьте это вручную в $GLOBAL_SETTINGS:${NC}"
+    echo "$HOOKS_CONFIG" | sed 's/^/  /'
+    echo ""
 else
-    # Если файл существует - пытаемся добавить нашу конфигурацию
-    echo -e "${BLUE}📝 Обновляю $GLOBAL_SETTINGS...${NC}"
-
-    # Проверяем есть ли jq (для работы с JSON)
-    if command -v jq &> /dev/null; then
-        # Проверяем есть ли уже секция hooks
-        if jq -e '.hooks' "$GLOBAL_SETTINGS" > /dev/null 2>&1; then
-            # Есть hooks - объединяем конфигурации
-            TEMP_FILE=$(mktemp)
-            jq ".hooks.PostToolUse |= . + ($HOOKS_CONFIG | .PostToolUse)" "$GLOBAL_SETTINGS" > "$TEMP_FILE"
-            mv "$TEMP_FILE" "$GLOBAL_SETTINGS"
-            echo -e "${GREEN}  ✓${NC} Hooks добавлены к существующей конфигурации"
+    # Проверяем существование файла settings.json
+    if [ ! -f "$GLOBAL_SETTINGS" ]; then
+        echo -e "${BLUE}📝 Создаю $GLOBAL_SETTINGS...${NC}"
+        echo "{\"hooks\": $HOOKS_CONFIG}" | jq '.' > "$GLOBAL_SETTINGS"
+        echo -e "${GREEN}  ✓${NC} Глобальные hooks установлены"
+    else
+        # Проверяем, не установлен ли уже наш hook
+        if grep -q "rails8-review" "$GLOBAL_SETTINGS" 2>/dev/null; then
+            echo -e "${YELLOW}⚠️  Hook для rails8-review уже установлен${NC}"
+            echo -e "${GREEN}  ✓${NC} Пропускаю добавление hooks"
         else
-            # Нет hooks - добавляем новую секцию
+            echo -e "${BLUE}📝 Обновляю $GLOBAL_SETTINGS...${NC}"
             TEMP_FILE=$(mktemp)
-            jq ". + {\"hooks\": $HOOKS_CONFIG}" "$GLOBAL_SETTINGS" > "$TEMP_FILE"
+
+            if jq -e '.hooks.PostToolUse' "$GLOBAL_SETTINGS" > /dev/null 2>&1; then
+                # Есть PostToolUse - добавляем в массив
+                jq ".hooks.PostToolUse += ($HOOKS_CONFIG | .PostToolUse)" "$GLOBAL_SETTINGS" > "$TEMP_FILE"
+            elif jq -e '.hooks' "$GLOBAL_SETTINGS" > /dev/null 2>&1; then
+                # Есть hooks, но нет PostToolUse
+                jq ".hooks += $HOOKS_CONFIG" "$GLOBAL_SETTINGS" > "$TEMP_FILE"
+            else
+                # Нет hooks вообще
+                jq ". + {\"hooks\": $HOOKS_CONFIG}" "$GLOBAL_SETTINGS" > "$TEMP_FILE"
+            fi
+
             mv "$TEMP_FILE" "$GLOBAL_SETTINGS"
             echo -e "${GREEN}  ✓${NC} Hooks добавлены"
         fi
-    else
-        # jq не установлен - выводим инструкцию
-        echo -e "${YELLOW}⚠️  jq не найден, не удалось автоматически обновить $GLOBAL_SETTINGS${NC}"
-        echo -e "${BLUE}Добавьте это вручную в $GLOBAL_SETTINGS:${NC}"
-        echo ""
-        echo "$HOOKS_CONFIG" | sed 's/^/  /'
-        echo ""
     fi
 fi
 

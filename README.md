@@ -1,87 +1,89 @@
 # Rails 8 Code Review Agent
 
-Специализированный агент Claude Code для проверки Rails 8 кода на соответствие современным лучшим практикам из **"The Rails 8 Way"** by Obie Fernandez.
+Агент Claude Code для проверки Rails 8 кода. Основан на книге "The Rails 8 Way" от Obie Fernandez.
 
-## 🎯 Назначение
+## Что делает
 
-Этот проект содержит настраиваемый агент Claude Code (`rails-way-agent.md`), который автоматически проверяет Rails приложения на:
+Проверяет Rails приложения на:
 
-- ✅ Использование новых фич Rails 8 (Solid Queue, Solid Cache, Solid Cable, Kamal 2)
-- ✅ Современные паттерны аутентификации (встроенная `has_secure_password` вместо Devise)
-- ✅ Правильное использование Turbo 8 и Hotwire
-- ✅ Оптимизацию БД запросов (N+1, индексы, PostgreSQL типы)
-- ✅ Стратегии кэширования (Russian Doll, fragment caching)
-- ✅ Безопасность (CSP, credentials, encryption, rate limiting)
-- ✅ Качество тестов (system tests, job tests, request specs)
+- Новые фичи Rails 8: Solid Queue, Solid Cache, Solid Cable, Kamal 2
+- Аутентификацию: встроенная `has_secure_password` вместо Devise
+- Turbo 8 и Hotwire
+- N+1 запросы, индексы БД, типы PostgreSQL
+- Кэширование: Russian Doll, fragment caching
+- Безопасность: CSP, credentials, encryption, rate limiting
+- Тесты: system tests, job tests, request specs
 
-## 📁 Структура проекта
+## Структура проекта
 
 ```
 rails-way-agent/
 ├── README.md                     # Этот файл
 ├── CLAUDE.md                     # Инструкции для Claude Code
-├── rails-way-agent.md            # Определение кастомного агента
+├── rails-way-agent.md            # Определение агента
 └── .idea/                        # IDE конфигурация (JetBrains)
 ```
 
-## 🚀 Использование
+## Как использовать
 
-### Установка агента
+### Установка
 
-Агент уже определён в файле `rails-way-agent.md`. Чтобы использовать его:
+Агент находится в файле `rails-way-agent.md`. Скопируйте его в ваш Rails проект:
 
-1. Скопируйте `rails-way-agent.md` в папку `.claude/agents/` вашего Rails проекта:
-   ```bash
-   mkdir -p .claude/agents/
-   cp rails-way-agent.md .claude/agents/
-   ```
+```bash
+mkdir -p .claude/agents/
+cp rails-way-agent.md .claude/agents/
+```
 
-2. Используйте агента в Claude Code с помощью команды `/agent rails8-review` или вызовите его по названию
+В Claude Code вызовите агента командой `/agent rails8-review` или по названию.
 
-### Примеры использования
+### Примеры
 
-**Полный аудит проекта:**
+**Аудит всего проекта:**
 ```
 Проверь проект на соответствие Rails 8 best practices
 ```
 
-**Проверка конкретного файла:**
+**Проверка файла:**
 ```
-Проверь app/controllers/posts_controller.rb на использование Rails 8 паттернов
+Проверь app/controllers/posts_controller.rb на Rails 8 паттерны
 ```
 
-**Поиск конкретных проблем:**
+**Поиск проблем:**
 ```
 Найди все N+1 queries в контроллерах
-Проверь использование Turbo в views
+Проверь Turbo в views
 Найди устаревшие gem (devise, sidekiq)
 ```
 
-## 🔍 Что проверяет агент
+## Что проверяет
 
-### 🔴 Критичные проблемы
+### Критичные проблемы
 
 - Отсутствие или неправильная аутентификация
 - N+1 запросы без оптимизации
-- Использование устаревших gem (devise, sidekiq, resque)
-- Небезопасное использование параметров (permit!)
+- Устаревшие gem: devise, sidekiq, resque
+- Небезопасные параметры: `permit!`
 
-### 🟡 Высокий приоритет
+### Высокий приоритет
 
 - Отсутствие Turbo интеграции
 - Неэффективные БД запросы
 - Отсутствие кэширования
-- Неправильное использование background jobs
+- Неправильные background jobs
 
-### 🟢 Средний и низкий приоритеты
+### Средний и низкий приоритеты
 
 - Отсутствие rate limiting
 - Устаревшие подходы к тестированию
 - Возможности для рефакторинга
 
-## 📚 Ключевые темы Rails 8
+## Ключевые темы Rails 8
 
 ### No PaaS Architecture
+
+Деплой без Heroku — на своих серверах:
+
 ```ruby
 # Solid Queue вместо Sidekiq
 # Solid Cache вместо Memcached/Redis
@@ -90,6 +92,9 @@ rails-way-agent/
 ```
 
 ### Встроенная аутентификация
+
+Devise больше не нужен:
+
 ```ruby
 class User < ApplicationRecord
   has_secure_password
@@ -99,18 +104,21 @@ end
 ```
 
 ### Turbo Streams для real-time обновлений
+
 ```erb
 <%= turbo_stream.append "messages", @message %>
 <%= turbo_stream.replace "form", partial: "form" %>
 ```
 
 ### Advanced Database Features
+
 - Virtual columns и generated columns
 - Composite primary keys
 - PostgreSQL JSONB, ranges, arrays
 - Query logs для отладки
 
 ### Russian Doll Caching
+
 ```erb
 <% cache @product do %>
   <%= render @product %>
@@ -120,22 +128,22 @@ end
 <% end %>
 ```
 
-## 🛠️ Модификация агента
+## Как изменить агента
 
-Чтобы добавить новые правила проверки:
+Добавьте новые правила проверки:
 
-1. Отредактируйте `rails-way-agent.md`
-2. Добавьте новую секцию в систем промпт
-3. Включите примеры anti-pattern (❌) и correct pattern (✅)
-4. Классифицируйте приоритет проблемы
+1. Откройте `rails-way-agent.md`
+2. Добавьте секцию в систем промпт
+3. Покажите anti-pattern (❌) и correct pattern (✅)
+4. Укажите приоритет проблемы
 5. Добавьте команду проверки в раздел "Команды для проверки кода"
 
-## 📖 Документация
+## Документация
 
-- **CLAUDE.md** — детальное описание архитектуры агента и концепций
-- **rails-way-agent.md** — полное определение агента с примерами код
+- **CLAUDE.md** — архитектура агента и концепции
+- **rails-way-agent.md** — полное определение агента с примерами
 
-## 🔗 Полезные ссылки
+## Полезные ссылки
 
 - [Rails 8 Release Notes](https://edgeguides.rubyonrails.org/8_0_release_notes.html)
 - [Solid Queue](https://github.com/rails/solid_queue)
@@ -143,31 +151,31 @@ end
 - [Turbo Handbook](https://turbo.hotwired.dev/handbook/introduction)
 - [Rails Security Guide](https://guides.rubyonrails.org/security.html)
 
-## 📝 Примеры отчётов
+## Примеры отчётов
 
-Агент предоставляет структурированные отчёты с примерами кода:
+Агент показывает проблемы с примерами кода:
 
 ```
-🔴 КРИТИЧНО: Использование устаревшего Devise
+КРИТИЧНО: Устаревший Devise
 Файл: app/models/user.rb:1
-Проблема: Используется gem 'devise' вместо встроенной has_secure_password
+Проблема: Используется gem 'devise' вместо has_secure_password
 Рекомендация: Замените на встроенную аутентификацию Rails 8
 
-🟡 ВНИМАНИЕ: Потенциальная N+1 проблема
+ВНИМАНИЕ: Потенциальная N+1 проблема
 Файл: app/views/posts/index.html.erb:8
 Проблема: @posts.each без includes(:comments)
 Рекомендация: @posts = Post.includes(:comments).all
 ```
 
-## 🤝 Авторство
+## Авторство
 
-- **Основана на:** The Rails 8 Way by Obie Fernandez
+- **Основан на:** The Rails 8 Way by Obie Fernandez
 - **Язык документации:** Русский
 - **Интеграция:** Claude Code agent format
 
-## 📄 Лицензия
+## Лицензия
 
-Этот проект предоставляется в образовательных целях для использования с Claude Code.
+Образовательный проект для Claude Code.
 
 ---
 

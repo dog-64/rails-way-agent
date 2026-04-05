@@ -124,6 +124,48 @@ fi
 
 echo ""
 
+# Настройка разрешений в ~/.claude/settings.json
+SETTINGS_FILE="$HOME/.claude/settings.json"
+
+# Разрешения, необходимые агенту
+# grep используется как самостоятельная команда при анализе кода
+REQUIRED_PERMISSIONS=(
+    'Bash(grep *)'
+)
+
+if [ -f "$SETTINGS_FILE" ]; then
+    echo -e "${BLUE}Настройка разрешений инструментов...${NC}"
+
+    SETTINGS_UPDATED=false
+
+    for perm in "${REQUIRED_PERMISSIONS[@]}"; do
+        # Проверяем, есть ли уже такое разрешение
+        if ! jq -e --arg p "$perm" '.permissions.allow | index($p)' "$SETTINGS_FILE" > /dev/null 2>&1; then
+            # Добавляем разрешение
+            tmp=$(mktemp)
+            jq --arg p "$perm" '.permissions.allow += [$p]' "$SETTINGS_FILE" > "$tmp" && mv "$tmp" "$SETTINGS_FILE"
+            echo -e "${GREEN}  +${NC} Добавлено разрешение: ${perm}"
+            SETTINGS_UPDATED=true
+        else
+            echo -e "${YELLOW}  o${NC} Уже разрешено: ${perm}"
+        fi
+    done
+
+    if [ "$SETTINGS_UPDATED" = true ]; then
+        echo -e "${GREEN}  Разрешения обновлены в ${SETTINGS_FILE}${NC}"
+    else
+        echo -e "${YELLOW}  Все разрешения уже настроены${NC}"
+    fi
+else
+    echo -e "${YELLOW}Файл ${SETTINGS_FILE} не найден${NC}"
+    echo -e "${YELLOW}   Добавьте вручную в permissions.allow:${NC}"
+    for perm in "${REQUIRED_PERMISSIONS[@]}"; do
+        echo -e "     \"${perm}\""
+    done
+fi
+
+echo ""
+
 # Проверяем наличие Claude CLI
 if command -v claude &> /dev/null; then
     echo -e "${GREEN}✓ Claude CLI обнаружен${NC}"
